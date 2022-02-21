@@ -17,7 +17,13 @@
  */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *Queue = NULL;
+
+    Queue->next = Queue;
+    Queue->prev = Queue;
+
+
+    return Queue;
 }
 
 /* Free all storage used by queue */
