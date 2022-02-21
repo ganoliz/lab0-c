@@ -17,7 +17,10 @@
  */
 struct list_head *q_new()
 {
-    struct list_head *Queue = NULL;
+    struct list_head *Queue = malloc(sizeof(struct list_head));
+
+    if (Queue == NULL)
+        return NULL;
 
     Queue->next = Queue;
     Queue->prev = Queue;
@@ -27,7 +30,20 @@ struct list_head *q_new()
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    struct list_head *temp = l->next;
+
+    if (l->next == l || l->next == NULL)
+        free(l);
+    else {
+        l->prev->next = NULL;
+        l->prev = l;
+        l->next = l;
+        free(l);
+        q_free(temp);
+    }
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -38,6 +54,18 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    element_t *Node = malloc(sizeof(element_t));
+
+
+    if (Node == NULL)
+        return false;
+
+    Node->value = s;
+    Node->list.next = head->next;
+    Node->list.prev = head;
+    head->next = &Node->list;
+
+
     return true;
 }
 
