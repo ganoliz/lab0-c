@@ -32,17 +32,28 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
-    struct list_head *temp = l->next;
+    struct list_head *temp;
 
-    if (l->next == l || l->next == NULL)
-        free(l);
-    else {
-        l->prev->next = NULL;
-        l->prev = l;
-        l->next = l;
-        free(l);
-        q_free(temp);
+
+    if (l == NULL) {
+        // printf("l is already release");
+        return;
     }
+
+
+    if (l->next == l || l->next == NULL) {
+        free(l);
+        return;
+    }
+
+    for (temp = l->next; temp != l;) {
+        element_t *node = container_of(temp, typeof(element_t), list);
+        temp = temp->next;
+        q_release_element(node);
+    }
+
+    free(l);
+    return;
 }
 
 /*
@@ -136,7 +147,20 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (head->next == head)
+        return NULL;
+    element_t *node;
+    node = list_entry(head->next, typeof(element_t), list);
+
+
+
+    head->next = head->next->next;
+    head->next->prev = head;
+
+    node->list.next = &node->list;
+    node->list.prev = &node->list;
+
+    return node;
 }
 
 /*
@@ -145,7 +169,19 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    if (head->next == head)
+        return NULL;
+    element_t *node;
+    node = list_entry(head->prev, typeof(element_t), list);
+
+
+
+    head->prev = head->prev->prev;
+    head->prev->next = head;
+    node->list.next = &node->list;
+    node->list.prev = &node->list;
+
+    return node;
 }
 
 /*
@@ -220,7 +256,23 @@ void q_swap(struct list_head *head)
  * (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
  * It should rearrange the existing ones.
  */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || head->next == head->prev)
+        return;
+    struct list_head *li;
+    struct list_head *temp;
+
+    temp = head->prev;
+    head->prev = head->next;
+    head->next = temp;
+
+    list_for_each (li, head) {
+        temp = li->prev;
+        li->prev = li->next;
+        li->next = temp;
+    }
+}
 
 /*
  * Sort elements of queue in ascending order
