@@ -55,15 +55,28 @@ void q_free(struct list_head *l)
 bool q_insert_head(struct list_head *head, char *s)
 {
     element_t *Node = malloc(sizeof(element_t));
+    char *c = malloc(strlen(s) + 1);
 
 
-    if (Node == NULL)
+
+    if (Node == NULL || c == NULL)
         return false;
 
-    Node->value = s;
-    Node->list.next = head->next;
-    Node->list.prev = head;
-    head->next = &Node->list;
+    memcpy(c, s, strlen(s) + 1);
+    if (head->next == head || head->prev == head) {
+        Node->value = c;
+        head->next = &Node->list;
+        head->prev = &Node->list;
+        Node->list.prev = head;
+        Node->list.next = head;
+    } else {
+        Node->value = c;
+        Node->list.next = head->next;
+        Node->list.prev = head;
+        head->next->prev = &Node->list;
+        head->next = &Node->list;
+    }
+
 
 
     return true;
@@ -78,6 +91,32 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    element_t *Node = malloc(sizeof(element_t));
+
+    char *c = malloc(strlen(s) + 1);
+    // struct list_head *temp;
+
+    if (Node == NULL || c == NULL)
+        return false;
+
+    memcpy(c, s, strlen(s) + 1);
+    if (head->next == head || head->prev == head) {
+        Node->value = c;
+        head->next = &Node->list;
+        head->prev = &Node->list;
+        Node->list.prev = head;
+        Node->list.next = head;
+    } else {
+        Node->value = c;
+        Node->list.next = head;
+        Node->list.prev = head->prev;
+
+        head->prev->next = &Node->list;
+        head->prev = &Node->list;
+    }
+
+
+
     return true;
 }
 
