@@ -22,8 +22,7 @@ struct list_head *q_new()
     if (Queue == NULL)
         return NULL;
 
-    Queue->next = Queue;
-    Queue->prev = Queue;
+    INIT_LIST_HEAD(Queue);
 
 
     return Queue;
@@ -74,6 +73,10 @@ bool q_insert_head(struct list_head *head, char *s)
         return false;
 
     memcpy(c, s, strlen(s) + 1);
+    Node->value = c;
+    INIT_LIST_HEAD(&Node->list);
+    list_add(&Node->list, head);
+    /*
     if (head->next == head || head->prev == head) {
         Node->value = c;
         head->next = &Node->list;
@@ -87,7 +90,7 @@ bool q_insert_head(struct list_head *head, char *s)
         head->next->prev = &Node->list;
         head->next = &Node->list;
     }
-
+    */
 
 
     return true;
@@ -111,6 +114,11 @@ bool q_insert_tail(struct list_head *head, char *s)
         return false;
 
     memcpy(c, s, strlen(s) + 1);
+
+    Node->value = c;
+    INIT_LIST_HEAD(&Node->list);
+    list_add_tail(&Node->list, head);
+    /*
     if (head->next == head || head->prev == head) {
         Node->value = c;
         head->next = &Node->list;
@@ -125,7 +133,7 @@ bool q_insert_tail(struct list_head *head, char *s)
         head->prev->next = &Node->list;
         head->prev = &Node->list;
     }
-
+    */
 
 
     return true;
@@ -147,20 +155,31 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head->next == head)
+    struct list_head *node = head->next;
+    if (node == head)
         return NULL;
-    element_t *node;
-    node = list_entry(head->next, typeof(element_t), list);
+    element_t *element;
+    element = list_entry(node, typeof(element_t), list);
 
+    list_del(node);
 
+    if (strlen(element->value) <= bufsize - 1)
+        element->value = sp;
+
+    else {
+        sp = element->value;
+        *(sp + bufsize) = '\0';
+    }
+    /*
+    sp=node->value;
 
     head->next = head->next->next;
     head->next->prev = head;
 
     node->list.next = &node->list;
     node->list.prev = &node->list;
-
-    return node;
+    */
+    return element;
 }
 
 /*
@@ -169,19 +188,23 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    if (head->next == head)
+    struct list_head *node = head->prev;
+    if (node == head)
         return NULL;
-    element_t *node;
-    node = list_entry(head->prev, typeof(element_t), list);
+    element_t *element;
+    element = list_entry(node, typeof(element_t), list);
 
+    list_del(node);
 
+    if (strlen(element->value) <= bufsize - 1)
+        sp = element->value;
+    else {
+        sp = element->value;
+        *(sp + bufsize) = '\0';
+    }
+    element->value = sp;
 
-    head->prev = head->prev->prev;
-    head->prev->next = head;
-    node->list.next = &node->list;
-    node->list.prev = &node->list;
-
-    return node;
+    return element;
 }
 
 /*
