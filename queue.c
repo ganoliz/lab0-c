@@ -33,15 +33,21 @@ void q_free(struct list_head *l)
 {
     struct list_head *temp;
 
-
     if (l == NULL) {
-        // printf("l is already release");
         return;
     }
 
-
-    if (l->next == l || l->next == NULL) {
+    if (list_empty(l)) {
+        // printf("l is already release");
         free(l);
+        return;
+    }
+
+    if (list_is_singular(l)) {
+        element_t *node = container_of(l->next, typeof(element_t), list);
+        q_release_element(node);
+        free(l);
+
         return;
     }
 
@@ -155,21 +161,41 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    struct list_head *node = head->next;
-    if (node == head)
+    if (head == NULL || list_empty(head)) {
         return NULL;
+    }
+
+
+
+    struct list_head *node = head->next;
     element_t *element;
     element = list_entry(node, typeof(element_t), list);
 
-    list_del(node);
 
-    if (strlen(element->value) <= bufsize - 1)
-        element->value = sp;
 
-    else {
-        sp = element->value;
-        *(sp + bufsize) = '\0';
+    if (sp) {
+        memcpy(sp, element->value, bufsize - 1);
+        *(sp + bufsize - 1) = '\0';
     }
+
+
+
+    list_del(node);
+    /*
+    if (strlen(element->value) <=0 || bufsize -1 <=0){
+        *sp='\0';
+    }
+
+    else if (strlen(element->value) <= bufsize - 1)
+        //sp = element->value;
+        memcpy(sp, element->value, strlen(element->value)+1);
+    else if(strlen(element->value) > bufsize - 1){
+        memcpy(sp, element->value, bufsize-1);
+        //sp = element->value;
+        *(sp + bufsize-1) = '\0';
+    }
+    */
+    // element->value = sp;
     /*
     sp=node->value;
 
@@ -188,22 +214,26 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    struct list_head *node = head->prev;
-    if (node == head)
+    if (head == NULL || list_empty(head)) {
         return NULL;
+    }
+
+
+
+    struct list_head *node = head->prev;
     element_t *element;
     element = list_entry(node, typeof(element_t), list);
 
-    list_del(node);
 
-    if (strlen(element->value) <= bufsize - 1)
-        sp = element->value;
-    else {
-        sp = element->value;
-        *(sp + bufsize) = '\0';
+
+    if (sp) {
+        memcpy(sp, element->value, bufsize - 1);
+        *(sp + bufsize - 1) = '\0';
     }
-    element->value = sp;
 
+
+
+    list_del(node);
     return element;
 }
 
@@ -246,6 +276,9 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+
+
+
     return true;
 }
 
@@ -281,7 +314,7 @@ void q_swap(struct list_head *head)
  */
 void q_reverse(struct list_head *head)
 {
-    if (!head || head->next == head->prev)
+    if (list_is_singular(head) || list_empty(head))
         return;
     struct list_head *li;
     struct list_head *temp;
@@ -302,4 +335,45 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    element_t *begin[100], *end[100], *L, *R;
+    element_t pivot;
+    int i = 0;
+
+    begin[0] = list_first_entry(head, element_t, list);
+    end[0] = list_last_entry(head, element_t, list);
+
+    while (i >= 0) {
+        L = begin[i];
+        R = end[i];
+
+        if (L != R && &begin[i]->list != head) {
+            pivot = *begin[i];
+            if (i == 100 - 1) {
+                return;
+            }
+
+            while (L != R) {
+                while (*(R->value) >= *(pivot.value) && L != R)
+                    R = list_entry(R->list.prev, element_t, list);
+                if (L != R) {
+                    L->value = R->value;
+                    L = list_entry(L->list.next, element_t, list);
+                }
+
+                while (L->value <= pivot.value && L != R)
+                    L = list_entry(L->list.next, element_t, list);
+                if (L != R) {
+                    R->value = L->value;
+                    R = list_entry(R->list.prev, element_t, list);
+                }
+            }
+            L->value = pivot.value;
+            begin[i + 1] = list_entry(L->list.next, element_t, list);
+            end[i + 1] = end[i];
+            end[i++] = L;
+        } else
+            i--;
+    }
+}
