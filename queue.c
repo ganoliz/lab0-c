@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -371,45 +372,72 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
+static struct list_head *mergeTwoLists(struct list_head *L1,
+                                       struct list_head *L2)
+{
+    struct list_head *head = NULL;
+    struct list_head **ptr = &head;
+    for (; L1 && L2; ptr = &(*ptr)->next) {
+        element_t *l1 = list_entry(L1, element_t, list);
+        element_t *l2 = list_entry(L2, element_t, list);
+        if (*(l1->value) < *(l2->value)) {
+            *ptr = L1;
+            L1 = L1->next;
+        } else {
+            *ptr = L2;
+            L2 = L2->next;
+        }
+    }
+    *ptr = (struct list_head *) ((uintptr_t) L1 | (uintptr_t) L2);
+    return head;
+}
+
+
+static struct list_head *mergesort_list(struct list_head *head)
+{
+    if (!head)
+        return NULL;
+
+    if (head->next == NULL)
+        return head;
+
+    struct list_head *slow = head;
+    for (struct list_head *fast = head->next;
+         fast != NULL && fast->next != NULL; fast = fast->next->next) {
+        slow = slow->next;
+    }
+    struct list_head *mid = slow->next;
+
+    // element_t *t=list_entry(mid,element_t,list);
+    // printf("mid= %c \n",*(t->value));
+
+    slow->next->prev = NULL;
+    slow->next = NULL;
+
+    struct list_head *left = mergesort_list(head), *right = mergesort_list(mid);
+    return mergeTwoLists(left, right);
+}
+
+
 void q_sort(struct list_head *head)
 {
-    element_t *begin[100], *end[100], *L, *R;
-    element_t pivot;
-    int i = 0;
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+    struct list_head *temp = head->next;
+    head->prev->next = NULL;
+    head->prev = NULL;
+    head->next->prev = NULL;
+    head->next = NULL;
 
-    begin[0] = list_first_entry(head, element_t, list);
-    end[0] = list_last_entry(head, element_t, list);
-
-    while (i >= 0) {
-        L = begin[i];
-        R = end[i];
-
-        if (L != R && &begin[i]->list != head) {
-            pivot = *begin[i];
-            if (i == 100 - 1) {
-                return;
-            }
-
-            while (L != R) {
-                while (*(R->value) >= *(pivot.value) && L != R)
-                    R = list_entry(R->list.prev, element_t, list);
-                if (L != R) {
-                    L->value = R->value;
-                    L = list_entry(L->list.next, element_t, list);
-                }
-
-                while (L->value <= pivot.value && L != R)
-                    L = list_entry(L->list.next, element_t, list);
-                if (L != R) {
-                    R->value = L->value;
-                    R = list_entry(R->list.prev, element_t, list);
-                }
-            }
-            L->value = pivot.value;
-            begin[i + 1] = list_entry(L->list.next, element_t, list);
-            end[i + 1] = end[i];
-            end[i++] = L;
-        } else
-            i--;
+    struct list_head *sortlist = mergesort_list(temp);
+    struct list_head *prev = sortlist;
+    struct list_head *current = sortlist->next;
+    for (; current != NULL; current = current->next, prev = prev->next) {
+        current->prev = prev;
     }
+
+    head->next = sortlist;  // let head connect to value
+    sortlist->prev = head;
+    head->prev = prev;  // finally prev will reach tail
+    prev->next = head;
 }
