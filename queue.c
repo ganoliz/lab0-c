@@ -71,13 +71,25 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (head == NULL)
+        return false;
+
+
     element_t *Node = malloc(sizeof(element_t));
     char *c = malloc(strlen(s) + 1);
 
 
 
-    if (Node == NULL || c == NULL)
+    if (Node == NULL || c == NULL) {
+        if (Node != NULL) {
+            free(Node);
+        }
+        if (c != NULL) {
+            free(c);
+        }
         return false;
+    }
+
 
     memcpy(c, s, strlen(s) + 1);
     Node->value = c;
@@ -112,13 +124,23 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    element_t *Node = malloc(sizeof(element_t));
+    if (head == NULL)
+        return false;
 
+    element_t *Node = malloc(sizeof(element_t));
     char *c = malloc(strlen(s) + 1);
     // struct list_head *temp;
 
-    if (Node == NULL || c == NULL)
+    if (Node == NULL || c == NULL) {
+        if (Node != NULL) {
+            free(Node);
+        }
+        if (c != NULL) {
+            free(c);
+        }
         return false;
+    }
+
 
     memcpy(c, s, strlen(s) + 1);
 
@@ -281,7 +303,10 @@ bool q_delete_mid(struct list_head *head)
     if (head == NULL || list_empty(head))
         return false;
     else if (list_is_singular(head)) {
-        q_remove_head(head, NULL, 100);
+        // q_remove_head(head, NULL, 100);
+        element_t *temp = list_entry(head->next, element_t, list);
+        list_del(&temp->list);
+        q_release_element(temp);
         return true;
     }
 
@@ -293,7 +318,11 @@ bool q_delete_mid(struct list_head *head)
         indir = &(*indir)->next;
     }
     struct list_head *next = (*indir)->next;
-    // free(*indir);
+
+    element_t *temp = list_entry(*indir, element_t, list);
+    list_del(*indir);
+    q_release_element(temp);
+
     prev->next = next;
 
 
@@ -404,7 +433,7 @@ void q_swap(struct list_head *head)
  */
 void q_reverse(struct list_head *head)
 {
-    if (list_is_singular(head) || list_empty(head))
+    if (head == NULL || list_is_singular(head) || list_empty(head))
         return;
     struct list_head *li;
     struct list_head *temp;
