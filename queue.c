@@ -380,7 +380,7 @@ static struct list_head *mergeTwoLists(struct list_head *L1,
     for (; L1 && L2; ptr = &(*ptr)->next) {
         element_t *l1 = list_entry(L1, element_t, list);
         element_t *l2 = list_entry(L2, element_t, list);
-        if (*(l1->value) < *(l2->value)) {
+        if (strcmp(l1->value, l2->value) < 0) {
             *ptr = L1;
             L1 = L1->next;
         } else {
@@ -411,11 +411,31 @@ static struct list_head *mergesort_list(struct list_head *head)
     // element_t *t=list_entry(mid,element_t,list);
     // printf("mid= %c \n",*(t->value));
 
-    slow->next->prev = NULL;
+    mid->prev = NULL;
     slow->next = NULL;
 
+    // element_t *temp_sl=list_entry(slow,element_t,list);
+    // printf("slow= %c \t",*(temp_sl->value));
+
     struct list_head *left = mergesort_list(head), *right = mergesort_list(mid);
+
     return mergeTwoLists(left, right);
+    /*
+    element_t *temp_l=list_entry(left,element_t,list);
+    printf("left = %c \t",*(temp_l->value));
+    element_t *temp_r=list_entry(right,element_t,list);
+    printf("right = %c \t",*(temp_r->value));
+
+    struct list_head *result=mergeTwoLists(left, right);
+
+    for(struct list_head *temp= result;temp!=NULL;temp=temp->next){
+        element_t *t1=list_entry(temp,element_t,list);
+        printf("temp = %c \t",*(t1->value));
+    }
+    printf("\n");
+
+    return result;
+    */
 }
 
 
@@ -423,11 +443,14 @@ void q_sort(struct list_head *head)
 {
     if (!head || list_empty(head) || list_is_singular(head))
         return;
+
+
     struct list_head *temp = head->next;
     head->prev->next = NULL;
     head->prev = NULL;
     head->next->prev = NULL;
     head->next = NULL;
+
 
     struct list_head *sortlist = mergesort_list(temp);
     struct list_head *prev = sortlist;
