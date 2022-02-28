@@ -313,6 +313,59 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head))
+        return false;
+    if (list_is_singular(head)) {
+        return true;
+    }
+
+
+    bool duplicate = false;
+
+
+    struct list_head *current, *next;
+    list_for_each_safe (current, next, head) {
+        element_t *node = list_entry(current, element_t, list);
+        element_t *safe = list_entry(next, element_t, list);
+
+
+        if (next == head) {
+            if (duplicate) {
+                element_t *temp = node;
+                // node=list_entry(node->list.prev,element_t,list);
+
+                printf("remove node last:%c \n", *(temp->value));
+                list_del(&temp->list);
+                q_release_element(temp);
+            }
+            break;
+        }
+
+
+        if (strcmp(node->value, safe->value) == 0) {
+            element_t *temp = node;
+            // node=list_entry(node->list.prev,element_t,list);
+            duplicate = true;
+
+            // printf("remove node:%c \n",*(temp->value));
+
+            list_del(&temp->list);
+            q_release_element(temp);
+        }
+
+        else if (duplicate) {
+            element_t *temp = node;
+            // node=list_entry(node->list.prev,element_t,list);
+
+            printf("remove node last:%c \n", *(temp->value));
+            list_del(&temp->list);
+            q_release_element(temp);
+            duplicate = false;
+        }
+    }
+
+
+
     return true;
 }
 
